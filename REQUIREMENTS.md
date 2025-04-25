@@ -77,7 +77,7 @@
 - [x] Frontend: Asset Tracking UI (Search, Add, Remove)
 - [x] Frontend: Notification Rule Management UI
 - [x] Backend: API Endpoints for Assets & Rules (CRUD)
-- [ ] Backend: Price Fetching & History Storage Logic (Vercel Cron Job -> API Route)
+- [x] Backend: Price Fetching & History Storage Logic (Vercel Cron Job -> API Route)
 - [ ] Backend: Notification Rule Evaluation Logic (using Price History)
 - [ ] Backend: Price History Pruning Logic
 - [ ] Feature: Quiet Time Implementation
