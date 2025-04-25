@@ -1,0 +1,147 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") // Comes from .env file
+}
+
+// -----------
+// App Models
+// -----------
+
+model User {
+  id                      String    @id @default(cuid())
+  email                   String    @unique
+  phoneNumber             String?   @unique // Optional phone number for SMS
+  passwordHash            String?
+  emailVerified           DateTime? // For email verification flows
+  phoneNumberVerified     DateTime? // For phone verification flows
+  quietTimeStart          String?   // Store as HH:MM (UTC) ? Or user's local time + timezone?
+  quietTimeEnd            String?   // Store as HH:MM (UTC) ?
+  morningSummaryEnabled   Boolean   @default(false)
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  // External Auth (e.g., Google, etc. via NextAuth)
+  accounts Account[]
+  sessions Session[]
+
+  trackedAssets TrackedAsset[] // Relation to assets the user tracks
+}
+
+model Asset {
+  id         String @id @default(cuid()) // Our internal ID
+  coingeckoId String @unique // ID from CoinGecko API (e.g., "bitcoin")
+  symbol     String // e.g., "btc"
+  name       String // e.g., "Bitcoin"
+
+  trackedBy   TrackedAsset[]
+  priceHistory PriceHistory[]
+
+  @@index([coingeckoId])
+}
+
+// Join table between User and Asset
+model TrackedAsset {
+  id        String   @id @default(cuid())
+  userId    String
+  assetId   String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  notificationRules NotificationRule[]
+
+  @@unique([userId, assetId]) // User can only track an asset once
+  @@index([userId])
+  @@index([assetId])
+}
+
+enum NotificationRuleType {
+  PRICE_TARGET_ABOVE
+  PRICE_TARGET_BELOW
+  PERCENT_CHANGE_INCREASE // Percentage increase within time_window_hours
+  PERCENT_CHANGE_DECREASE // Percentage decrease within time_window_hours
+  // MOVING_AVERAGE_CROSS (Future)
+}
+
+model NotificationRule {
+  id             String               @id @default(cuid())
+  trackedAssetId String
+  type           NotificationRuleType
+  value          Float                // The target price or percentage change
+  timeWindowHours Int?                 // Required for PERCENT_CHANGE_* types (max 72)
+  isEnabled      Boolean              @default(true)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  lastTriggeredAt DateTime?           // To prevent rapid re-triggering
+
+  trackedAsset TrackedAsset @relation(fields: [trackedAssetId], references: [id], onDelete: Cascade)
+
+  @@index([trackedAssetId])
+}
+
+model PriceHistory {
+  id        String   @id @default(cuid())
+  assetId   String
+  price     Float    // Price in USD (or a reference currency)
+  timestamp DateTime @default(now())
+
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId, timestamp]) // Query efficiently by asset and time
+  @@index([timestamp]) // For pruning old data
+}
+
+// --------------------
+// NextAuth.js Models
+// (Include if using NextAuth.js database adapter)
+// See: https://next-auth.js.org/adapters/prisma
+// --------------------
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String? @db.Text
+  access_token       String? @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String? @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
