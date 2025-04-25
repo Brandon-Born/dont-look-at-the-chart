@@ -74,9 +74,9 @@
 - [x] User Authentication Setup (e.g., NextAuth.js)
 - [x] CoinGecko API Client Implementation
 - [x] Frontend: Basic UI Layout & Pages
-- [ ] Frontend: Asset Tracking UI (Search, Add, Remove)
-- [ ] Frontend: Notification Rule Management UI
-- [ ] Backend: API Endpoints for Assets & Rules (CRUD)
+- [x] Frontend: Asset Tracking UI (Search, Add, Remove)
+- [x] Frontend: Notification Rule Management UI
+- [x] Backend: API Endpoints for Assets & Rules (CRUD)
 - [ ] Backend: Price Fetching & History Storage Logic (Vercel Cron Job -> API Route)
 - [ ] Backend: Notification Rule Evaluation Logic (using Price History)
 - [ ] Backend: Price History Pruning Logic
