@@ -78,8 +78,10 @@
 - [x] Frontend: Notification Rule Management UI
 - [x] Backend: API Endpoints for Assets & Rules (CRUD)
 - [x] Backend: Price Fetching & History Storage Logic (Vercel Cron Job -> API Route)
-- [ ] Backend: Notification Rule Evaluation Logic (using Price History)
-- [ ] Backend: Price History Pruning Logic
-- [ ] Feature: Quiet Time Implementation
-- [ ] Feature: Morning Summary Implementation
+- [x] Backend: Notification Rule Evaluation Logic (using Price History)
+- [x] Backend: Price History Pruning Logic
+- [x] Backend: Notification Delivery Service Integration (Email - Resend)
+- [ ] Backend: Notification Delivery Service Integration (SMS - Twilio) - *Deferred: Requires Twilio account setup/verification. Revisit post-deployment.*
+- [x] Feature: Quiet Time Implementation
+- [ ] Feature: Morning Summary Implementation (Partially Complete: Price changes only, no notification summary yet)
 - [ ] Deployment & Testing on Vercel 

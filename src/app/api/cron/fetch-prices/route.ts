@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getPrices } from '@/lib/coingecko';
+import { evaluateRules } from '@/lib/ruleEvaluator';
 
 // Function to fetch prices and save them to history
 async function fetchAndStorePrices() {
@@ -61,6 +62,29 @@ async function fetchAndStorePrices() {
   return { message: "Prices stored", count: result.count };
 }
 
+// Function to prune old price history
+async function pruneOldPriceHistory() {
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+  console.log(`Cron Job: Pruning price history older than ${sevenDaysAgo.toISOString()}...`);
+
+  try {
+    const result = await prisma.priceHistory.deleteMany({
+      where: {
+        timestamp: {
+          lt: sevenDaysAgo, // Less than 7 days ago
+        },
+      },
+    });
+    console.log(`Cron Job: Successfully pruned ${result.count} old price history records.`);
+    return { success: true, count: result.count };
+  } catch (error) {
+    console.error("Cron Job: Error pruning price history:", error);
+    return { success: false, count: 0 };
+  }
+}
+
 // GET /api/cron/fetch-prices
 export async function GET(request: Request) {
   // 1. Basic Security Check (Vercel Cron Secret)
@@ -72,14 +96,30 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // 2. Execute the price fetching and storing logic
+  // 2. Execute the price fetching, storing, rule evaluation, and pruning
   try {
-    const result = await fetchAndStorePrices();
-    // TODO: Trigger rule evaluation logic here after prices are stored
-    // await evaluateRules(); 
-    console.log("Cron Job: Evaluation step placeholder.");
+    const storeResult = await fetchAndStorePrices();
 
-    return NextResponse.json({ success: true, ...result });
+    // Only evaluate rules if new prices were actually stored
+    if (storeResult.count > 0) { 
+        console.log("Cron Job: New prices stored, evaluating rules...");
+        await evaluateRules(); // Just call it, don't expect a return value
+        // Logs within evaluateRules and sendNotifications will indicate triggered rules
+    }
+
+    // Prune old history after processing
+    const pruneResult = await pruneOldPriceHistory();
+
+    // Updated response: Rule evaluation success is now implicit if no error is thrown.
+    // We no longer get the count of triggered rules back from evaluateRules.
+    return NextResponse.json({
+      success: true,
+      pricesStored: storeResult.count,
+      // rulesEvaluated: evaluationResult.length, // Removed
+      evaluationTriggered: storeResult.count > 0, // Indicate if evaluation was attempted
+      historyPruned: pruneResult.count,
+    });
+
   } catch (error) {
     console.error("[API/CRON/FETCH-PRICES] Error:", error);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });

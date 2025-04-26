@@ -14,14 +14,22 @@ export default function Header() {
           Don't Look At The Chart
         </Link>
         
-        <div>
+        <div className="flex items-center space-x-4">
           {status === 'authenticated' && (
-            <button
-              onClick={() => signOut()} 
-              className="bg-dracula-red hover:bg-opacity-80 text-dracula-fg font-semibold py-2 px-4 rounded text-sm"
-            >
-              Sign Out
-            </button>
+            <>
+              <Link 
+                href="/settings" 
+                className="bg-dracula-purple hover:bg-opacity-80 text-dracula-fg font-semibold py-2 px-4 rounded text-sm"
+              >
+                Settings
+              </Link>
+              <button
+                onClick={() => signOut()} 
+                className="bg-dracula-red hover:bg-opacity-80 text-dracula-fg font-semibold py-2 px-4 rounded text-sm"
+              >
+                Sign Out
+              </button>
+            </>
           )}
           {/* Add Sign In button here if needed for non-logged-in pages */}
         </div>

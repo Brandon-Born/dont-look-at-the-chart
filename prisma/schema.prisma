@@ -24,9 +24,17 @@ model User {
   passwordHash            String?
   emailVerified           DateTime? // For email verification flows
   phoneNumberVerified     DateTime? // For phone verification flows
-  quietTimeStart          String?   // Store as HH:MM (UTC) ? Or user's local time + timezone?
-  quietTimeEnd            String?   // Store as HH:MM (UTC) ?
+
+  // Quiet Time Settings
+  quietTimeEnabled        Boolean   @default(false)
+  quietTimeStart          String?   // Store as HH:MM (e.g., "22:00")
+  quietTimeEnd            String?   // Store as HH:MM (e.g., "07:00") - Handles overnight
+  quietTimeZone           String?   // IANA Time Zone ID (e.g., "America/New_York")
+
+  // Morning Summary Settings - NEW
   morningSummaryEnabled   Boolean   @default(false)
+  morningSummaryTime      String?   @default("08:00") // e.g., "08:00"
+
   createdAt               DateTime  @default(now())
   updatedAt               DateTime  @updatedAt
 
@@ -86,6 +94,7 @@ model NotificationRule {
   lastTriggeredAt DateTime?           // To prevent rapid re-triggering
 
   trackedAsset TrackedAsset @relation(fields: [trackedAssetId], references: [id], onDelete: Cascade)
+  triggeredAlerts TriggeredAlert[] // Add relation to triggered alerts
 
   @@index([trackedAssetId])
 }
@@ -100,6 +109,21 @@ model PriceHistory {
 
   @@index([assetId, timestamp]) // Query efficiently by asset and time
   @@index([timestamp]) // For pruning old data
+}
+
+// Model to record when a notification rule is triggered
+model TriggeredAlert {
+  id        String   @id @default(cuid())
+  ruleId    String
+  triggeredAt DateTime @default(now())
+  triggeringPrice Float   // The price that caused the trigger
+  // Optional: Add details about notification sending status later
+  // notificationSentAt DateTime? 
+  // notificationError String?
+
+  rule NotificationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+  @@index([ruleId, triggeredAt])
 }
 
 // --------------------

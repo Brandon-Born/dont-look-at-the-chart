@@ -42,22 +42,46 @@ export const authOptions: NextAuthOptions = {
   // Callbacks can be used to control session/JWT content or handle events
   callbacks: {
     async session({ session, token }) {
-      // Add user ID and other custom properties to the session
+      // Add user ID and other custom properties from the token to the session
       if (token.sub && session.user) {
-        session.user.id = token.sub
+        session.user.id = token.sub;
+        // Add quiet time fields from token
+        session.user.quietTimeEnabled = token.quietTimeEnabled;
+        session.user.quietTimeStart = token.quietTimeStart;
+        session.user.quietTimeEnd = token.quietTimeEnd;
+        session.user.quietTimeZone = token.quietTimeZone;
       }
-      // Add custom fields here if needed
+      // Add other custom fields here if needed from token
       // session.user.role = token.role
-      return session
+      return session;
     },
-    async jwt({ token, user }) {
-      // Add custom properties to the JWT token on sign in
-      if (user) {
-        token.id = user.id
-        // Add custom fields here if needed
-        // token.role = user.role;
+    async jwt({ token, user, trigger, session: updateSessionData }) {
+      // Initial sign in or session update
+      if (user || trigger === "update") {
+        // Fetch user data from DB to get the latest settings
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.sub ?? user?.id },
+          select: {
+            id: true,
+            quietTimeEnabled: true,
+            quietTimeStart: true,
+            quietTimeEnd: true,
+            quietTimeZone: true,
+            // Add other fields needed in the token/session, e.g., role
+          }
+        });
+
+        if (dbUser) {
+          token.id = dbUser.id;
+          token.quietTimeEnabled = dbUser.quietTimeEnabled;
+          token.quietTimeStart = dbUser.quietTimeStart;
+          token.quietTimeEnd = dbUser.quietTimeEnd;
+          token.quietTimeZone = dbUser.quietTimeZone;
+          // Add other custom fields here if needed
+          // token.role = dbUser.role;
+        }
       }
-      return token
+      return token;
     },
     // Add other callbacks like signIn, redirect etc. if needed
   },

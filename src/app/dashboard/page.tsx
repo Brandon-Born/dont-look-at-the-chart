@@ -3,6 +3,7 @@
 import React, { useState, useCallback } from 'react'; // Import useState and useCallback
 import { useSession } from 'next-auth/react'; // Use client hook for session
 import { redirect } from 'next/navigation';
+import Link from 'next/link'; // <-- Import Link
 import AssetSearch from '@/components/AssetSearch';
 import TrackedAssetsList from '@/components/TrackedAssetsList';
 
