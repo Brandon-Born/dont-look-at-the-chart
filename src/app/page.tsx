@@ -1,6 +1,6 @@
 import { getCurrentUser } from "@/lib/session";
 import { redirect } from "next/navigation";
-import { signIn } from "next-auth/react"; // Still need signIn for the button
+// import { signIn } from "next-auth/react"; // Unused
 import SignInButton from "@/components/SignInButton"; // Create a dedicated client component for the button
 
 export default async function Home() {
@@ -21,7 +21,7 @@ export default async function Home() {
         Get Crypto Price Alerts Delivered.
       </h2>
       <p className="text-lg text-dracula-fg max-w-xl mb-12">
-        Don't Look At The Chart monitors cryptocurrency prices for you and sends notifications based on your custom rules via Email or SMS. Stay informed without the stress.
+        Don&apos;t Look At The Chart monitors cryptocurrency prices for you and sends notifications based on your custom rules via Email or SMS. Stay informed without the stress.
       </p>
       
       {/* Use a Client Component for the button that uses onClick */}

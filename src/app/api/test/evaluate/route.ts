@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
 // GET /api/test/evaluate
 
 // --- TEMPORARILY DISABLED ---
-export async function GET(request: Request) {
+export async function GET() {
   console.log('API Route: /api/test/evaluate accessed but is disabled.');
   return NextResponse.json(
     { message: 'This test endpoint is currently disabled.' },

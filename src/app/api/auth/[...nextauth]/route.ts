@@ -55,7 +55,7 @@ export const authOptions: NextAuthOptions = {
       // session.user.role = token.role
       return session;
     },
-    async jwt({ token, user, trigger, session: updateSessionData }) {
+    async jwt({ token, user, trigger }) {
       // Initial sign in or session update
       if (user || trigger === "update") {
         // Fetch user data from DB to get the latest settings

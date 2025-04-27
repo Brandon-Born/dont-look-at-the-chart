@@ -1,17 +1,10 @@
 import { prisma } from '@/lib/prisma';
-import { NotificationRule, PriceHistory, NotificationRuleType, Prisma, User } from '@prisma/client';
-import { sendNotifications } from './notificationSender'; // Import the new service
-import { toZonedTime, format } from 'date-fns-tz'; // Corrected import: used toZonedTime, removed zonedTimeToUtc
-import { isWithinInterval, parse } from 'date-fns'; // Added imports
+import { PriceHistory, NotificationRuleType, User } from '@prisma/client';
+import { sendNotifications } from './notificationSender';
+import { toZonedTime, format } from 'date-fns-tz';
 
 // Simple cooldown period (in minutes) to prevent rapid re-triggering of the same rule
 const RULE_COOLDOWN_MINUTES = 60; 
-
-interface RuleContext {
-  rule: NotificationRule;
-  latestPrice?: PriceHistory;
-  historicalPrices?: PriceHistory[]; // Only populated for % change rules
-}
 
 interface TriggeredRuleInfo {
   ruleId: string;
@@ -30,73 +23,63 @@ interface TriggeredRuleInfo {
  * Checks if the current time falls within the user's defined quiet time.
  * Handles overnight periods (e.g., 10 PM to 7 AM).
  * @param user The user object containing quiet time settings.
+ * @param nowUtc Optional date object representing the current UTC time (for testing).
  * @returns {boolean} True if it is currently quiet time, false otherwise.
  */
-function isQuietTime(user: User): boolean {
+export function isQuietTime(user: User, nowUtc: Date = new Date()): boolean {
   if (!user.quietTimeEnabled || !user.quietTimeStart || !user.quietTimeEnd || !user.quietTimeZone) {
     return false; // Quiet time not enabled or configured
   }
 
   try {
-    const nowUtc = new Date();
-    const timeZone = user.quietTimeZone;
+    const timeZone = user.quietTimeZone; // e.g., "America/New_York"
     const nowZoned = toZonedTime(nowUtc, timeZone);
 
-    // Parse start and end times relative to the *current date* in the user's timezone
-    // This handles the date component correctly for comparisons.
+    // Use format to reliably extract hour/minute in the target timezone
+    const currentHour = parseInt(format(nowZoned, 'H', { timeZone }), 10);
+    const currentMinute = parseInt(format(nowZoned, 'm', { timeZone }), 10);
+
+    // Parse start and end times
     const startTimeStr = user.quietTimeStart; // e.g., "22:00"
     const endTimeStr = user.quietTimeEnd;   // e.g., "07:00"
 
-    // Create Date objects for start/end times based on today's date in the target timezone
     const startHour = parseInt(startTimeStr.split(':')[0], 10);
     const startMinute = parseInt(startTimeStr.split(':')[1], 10);
     const endHour = parseInt(endTimeStr.split(':')[0], 10);
     const endMinute = parseInt(endTimeStr.split(':')[1], 10);
 
-    let startTime = new Date(nowZoned); // Start with today's date in user's zone
-    startTime.setHours(startHour, startMinute, 0, 0);
+    const currentTimeInMinutes = currentHour * 60 + currentMinute;
+    const startTimeInMinutes = startHour * 60 + startMinute;
+    const endTimeInMinutes = endHour * 60 + endMinute;
 
-    let endTime = new Date(nowZoned);
-    endTime.setHours(endHour, endMinute, 0, 0);
+    // Handle zero duration case
+    if (startTimeInMinutes === endTimeInMinutes) {
+      return false;
+    }
 
-    // Handle overnight case (start time is later than end time)
-    if (startTime > endTime) { 
-      // Is current time *after* start OR *before* end?
-      // Example: Quiet time 22:00 to 07:00
-      // If now is 23:00, it's >= start time (22:00) -> true
-      // If now is 06:00, it's < end time (07:00) -> true
-      // We need to check against yesterday's end time or tomorrow's start time conceptually,
-      // but comparing against the start/end times set on today's date handles this implicitly
-      // when combined with the check below.
-      
-      // If current time is after the start time (e.g., 23:00 >= 22:00)
-      if (nowZoned >= startTime) return true;
+    const isOvernight = startTimeInMinutes > endTimeInMinutes;
 
-      // If current time is before the end time (e.g., 06:00 < 07:00)
-      // We need to compare against the *next day's* end time effectively.
-      // Let's adjust endTime to be tomorrow if necessary for the check.
-      let endCheckTime = new Date(endTime);
-      endCheckTime.setDate(endCheckTime.getDate() + 1); // End time is on the next day
-      
-      // Alternatively, simpler approach: check if current time is >= start OR < end
-       return nowZoned >= startTime || nowZoned < endTime;
-
+    if (isOvernight) {
+      return currentTimeInMinutes >= startTimeInMinutes || currentTimeInMinutes < endTimeInMinutes;
     } else {
-      // Normal case (e.g., 09:00 to 17:00)
-      return isWithinInterval(nowZoned, { start: startTime, end: endTime });
+      return currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes < endTimeInMinutes;
     }
 
   } catch (error) {
-    console.error(`Error checking quiet time for user ${user.id} (${user.email}):`, error);
+    // Log the specific error for better debugging if it happens
+    console.error(`Error checking quiet time for user ${user.id} (${user.email}) in timezone ${user.quietTimeZone}:`, error);
     return false; // Fail safe: assume it's not quiet time if error occurs
   }
 }
 
 /**
  * Evaluates all active notification rules against the latest price data.
- * @returns {Promise<void>} 
+ * @param quietTimeChecker Optional function to check for quiet time (defaults to isQuietTime).
+ * @returns {Promise<void>}
  */
-export async function evaluateRules(): Promise<void> {
+export async function evaluateRules(
+  quietTimeChecker: (user: User, nowUtc?: Date) => boolean = isQuietTime
+): Promise<void> {
   console.log("Rule Evaluator: Starting evaluation...");
 
   const triggeredRules: TriggeredRuleInfo[] = [];
@@ -142,6 +125,7 @@ export async function evaluateRules(): Promise<void> {
   latestPriceRecords.forEach(p => latestPricesMap.set(p.assetId, p));
 
   // 4. Evaluate each rule
+  const nowForQuietTimeCheck = new Date(); // Use a consistent time for all checks in this run
   for (const rule of activeRules) {
     const assetId = rule.trackedAsset.asset.id;
     const latestPrice = latestPricesMap.get(assetId);
@@ -149,9 +133,6 @@ export async function evaluateRules(): Promise<void> {
     if (!latestPrice) {
       continue; 
     }
-
-    const ruleContext: RuleContext = { rule, latestPrice };
-    let conditionMet = false;
 
     // --- Cooldown Check --- 
     const lastTriggered = rule.triggeredAlerts?.[0];
@@ -164,6 +145,7 @@ export async function evaluateRules(): Promise<void> {
     }
     // --- End Cooldown Check ---
 
+    let conditionMet = false;
     try {
         switch (rule.type) {
             case NotificationRuleType.PRICE_TARGET_ABOVE:
@@ -188,25 +170,23 @@ export async function evaluateRules(): Promise<void> {
                         orderBy: { timestamp: 'asc' }, 
                     });
 
-                    if (startPriceRecord) {
+                    if (startPriceRecord && startPriceRecord.price !== 0) { // Avoid division by zero
                         const priceChange = latestPrice.price - startPriceRecord.price;
                         const percentChange = (priceChange / startPriceRecord.price) * 100;
                         
                         if (rule.type === NotificationRuleType.PERCENT_CHANGE_INCREASE) {
                             conditionMet = percentChange >= rule.value;
                         } else { 
-                            conditionMet = percentChange <= rule.value;
+                            conditionMet = percentChange <= rule.value; // Assumes negative value for decrease target
                         }
-                    } else {
-                        // console.warn(`Rule Evaluator: Missing historical price for rule ${rule.id} time window.`);
-                    }
+                    } 
                 }
                 break;
         }
 
         if (conditionMet) {
-            // ---> Quiet Time Check <--- 
-            if (isQuietTime(rule.trackedAsset.user)) {
+            // ---> Use the passed-in quietTimeChecker <--- 
+            if (quietTimeChecker(rule.trackedAsset.user, nowForQuietTimeCheck)) { 
                 console.log(`Rule Evaluator: Rule ${rule.id} triggered for user ${rule.trackedAsset.user.email}, but it's quiet time. Suppressing notification.`);
                 // We still record the trigger, but don't add to notification list
                  const triggeredAlertData = {

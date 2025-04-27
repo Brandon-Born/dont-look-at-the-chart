@@ -20,15 +20,18 @@ if (FROM_EMAIL === 'noreply@example.com') {
  * @returns HTML string for the email body.
  */
 function formatSummaryEmailHtml(summaryData: AssetSummaryData[]): string {
-    let tableRows = summaryData.map(asset => `
-        <tr>
-            <td style="padding: 8px; border: 1px solid #ddd;">${asset.name} (${asset.symbol})</td>
-            <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${asset.currentPrice !== null ? `$${asset.currentPrice.toFixed(2)}` : 'N/A'}</td>
-            <td style="padding: 8px; border: 1px solid #ddd; text-align: right; color: ${asset.changePercent24h === null ? 'black' : asset.changePercent24h >= 0 ? 'green' : 'red'};"> 
-                ${asset.changePercent24h !== null ? `${asset.changePercent24h >= 0 ? '+' : ''}${asset.changePercent24h.toFixed(2)}%` : 'N/A'}
-            </td>
-        </tr>
-    `).join('');
+    let tableRows = ''; // Use let as it's reassigned
+    summaryData.forEach(asset => {
+        tableRows += `
+            <tr>
+                <td style="padding: 8px; border: 1px solid #ddd;">${asset.name} (${asset.symbol})</td>
+                <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${asset.currentPrice !== null ? `$${asset.currentPrice.toFixed(2)}` : 'N/A'}</td>
+                <td style="padding: 8px; border: 1px solid #ddd; text-align: right; color: ${asset.changePercent24h === null ? 'black' : asset.changePercent24h >= 0 ? 'green' : 'red'};"> 
+                    ${asset.changePercent24h !== null ? `${asset.changePercent24h >= 0 ? '+' : ''}${asset.changePercent24h.toFixed(2)}%` : 'N/A'}
+                </td>
+            </tr>
+        `;
+    });
 
     return `
         <h1>Your Daily Crypto Summary</h1>

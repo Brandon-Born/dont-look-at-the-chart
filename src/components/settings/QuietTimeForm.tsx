@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useTransition } from 'react';
 import { useSession } from 'next-auth/react';
-import { z } from 'zod';
 import { commonTimeZones, getBrowserTimeZone } from '@/lib/timezones';
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button"
@@ -14,14 +13,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 
 // Schema matching the API PATCH endpoint's expected input
 const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
-const settingsSchema = z.object({
-  quietTimeEnabled: z.boolean(),
-  quietTimeStart: z.string().regex(timeRegex).nullable().optional(),
-  quietTimeEnd: z.string().regex(timeRegex).nullable().optional(),
-  quietTimeZone: z.string().nullable().optional(),
-});
-
-type SettingsData = z.infer<typeof settingsSchema>;
 
 // Type for the user data we expect to fetch (subset of User model)
 interface UserSettings {
@@ -33,9 +24,9 @@ interface UserSettings {
 }
 
 export default function QuietTimeForm() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const [isPending, startTransition] = useTransition();
-  const [settings, setSettings] = useState<SettingsData>({ // Local form state
+  const [settings, setSettings] = useState<UserSettings>({ // Local form state
     quietTimeEnabled: false,
     quietTimeStart: null,
     quietTimeEnd: null,
@@ -108,20 +99,26 @@ export default function QuietTimeForm() {
 
   }, [status]); // Depend only on session status change
 
-  const handleInputChange = (field: keyof SettingsData, value: any) => {
+  const handleInputChange = (field: keyof UserSettings, value: string | boolean | null) => {
     setSettings(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTimeInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-     // Allow empty string temporarily, validation happens on save
+    // Allow empty string temporarily, validation happens on save
     if (value === '' || timeRegex.test(value)) {
-        handleInputChange(name as keyof SettingsData, value || null);
+      // Ensure value passed to handleInputChange is string or null
+      handleInputChange(name as keyof UserSettings, value || null);
     }
   };
 
-  const handleTimeZoneChange = (value: string) => {
-     handleInputChange('quietTimeZone', value);
+  const handleSwitchChange = (checked: boolean, name: keyof UserSettings) => {
+      handleInputChange(name, checked);
+  };
+
+  const handleSelectChange = (value: string, name: keyof UserSettings) => {
+     // Ensure value passed to handleInputChange is string or null if empty
+     handleInputChange(name, value || null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -142,7 +139,7 @@ export default function QuietTimeForm() {
     }
     
     // --- Build the data payload --- 
-    const dataToSubmit: Partial<SettingsData> = {};
+    const dataToSubmit: Partial<UserSettings> = {};
 
     if (anyQuietSettingChanged) {
         dataToSubmit.quietTimeEnabled = settings.quietTimeEnabled;
@@ -185,9 +182,11 @@ export default function QuietTimeForm() {
         setInitialSettings(updatedData);
 
         toast.success("Quiet time settings updated.");
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Failed to update settings:", error);
-        toast.error(error.message || "Could not update settings.");
+        // Use type guard to access error.message safely
+        const errorMessage = error instanceof Error ? error.message : "Could not update settings.";
+        toast.error(errorMessage);
         // Optionally revert local state on error
         // setSettings(initialSettings || { quietTimeEnabled: false, quietTimeStart: null, quietTimeEnd: null, quietTimeZone: null });
       }
@@ -218,7 +217,7 @@ export default function QuietTimeForm() {
             <Switch
               id="quietTimeEnabled"
               checked={isEnabled}
-              onCheckedChange={(checked: boolean) => handleInputChange('quietTimeEnabled', checked)}
+              onCheckedChange={(checked: boolean) => handleSwitchChange(checked, 'quietTimeEnabled')}
               aria-labelledby="quiet-time-label"
             />
             <Label htmlFor="quietTimeEnabled" id="quiet-time-label">Enable Quiet Time</Label>
@@ -232,7 +231,7 @@ export default function QuietTimeForm() {
                 name="quietTimeStart"
                 type="time" // Use time input for better UX
                 value={settings.quietTimeStart || ''}
-                onChange={handleTimeChange}
+                onChange={handleTimeInputChange}
                 required={isEnabled} // Required only if quiet time is enabled
                 disabled={!isEnabled}
               />
@@ -244,7 +243,7 @@ export default function QuietTimeForm() {
                 name="quietTimeEnd"
                 type="time"
                 value={settings.quietTimeEnd || ''}
-                onChange={handleTimeChange}
+                onChange={handleTimeInputChange}
                 required={isEnabled}
                 disabled={!isEnabled}
               />
@@ -253,7 +252,7 @@ export default function QuietTimeForm() {
                 <Label htmlFor="quietTimeZone">Time Zone</Label>
                 <Select 
                     value={settings.quietTimeZone || ''}
-                    onValueChange={handleTimeZoneChange}
+                    onValueChange={(value) => handleSelectChange(value, 'quietTimeZone')}
                     required={isEnabled}
                     disabled={!isEnabled}
                 >

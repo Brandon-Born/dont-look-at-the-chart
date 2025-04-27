@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/pages/api/auth/[...nextauth]';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
@@ -51,7 +51,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const { morningSummaryEnabled, morningSummaryTime } = validationResult.data;
 
       // Construct update data, only including fields that were provided
-      const dataToUpdate: { morningSummaryEnabled?: boolean; morningSummaryTime?: string } = {};
+      // Allow null for morningSummaryTime based on Prisma schema
+      const dataToUpdate: { morningSummaryEnabled?: boolean; morningSummaryTime?: string | null } = {};
       if (morningSummaryEnabled !== undefined) {
         dataToUpdate.morningSummaryEnabled = morningSummaryEnabled;
       }

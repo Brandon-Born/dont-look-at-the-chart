@@ -66,8 +66,8 @@ export default function TrackedAssetsList({ refreshKey, requestAssetListRefresh 
       }
     }
 
-    fetchTrackedAssets()
-  }, [refreshKey]) // Re-run effect when refreshKey changes
+    fetchTrackedAssets();
+  }, [refreshKey, error, trackedAssets.length]); // Re-run effect when refreshKey changes
 
   const handleRemoveAsset = async (trackedAssetId: string) => {
     // Optimistic UI update (optional but improves UX)

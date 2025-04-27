@@ -79,6 +79,14 @@ This project is built with Next.js and designed for deployment on Vercel.
 
 Open [http://localhost:3000](http://localhost:3000) with your browser.
 
+## Running Tests
+
+To run the unit tests:
+
+```bash
+npm test
+```
+
 ## Deployment
 
 This application is designed for deployment on [Vercel](https://vercel.com/).

@@ -11,7 +11,7 @@ export default function Header() {
     <header className="bg-dracula-selection p-4 shadow-md">
       <nav className="container mx-auto flex justify-between items-center">
         <Link href={session ? '/dashboard' : '/'} className="text-dracula-cyan hover:text-dracula-pink text-xl font-bold">
-          Don't Look At The Chart
+          Don&apos;t Look At The Chart
         </Link>
         
         <div className="flex items-center space-x-4">

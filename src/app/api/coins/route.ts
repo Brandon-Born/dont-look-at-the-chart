@@ -35,7 +35,7 @@ async function fetchMarketCoinsPage(page: number): Promise<MarketCoin[]> {
   return response.json();
 }
 
-export async function GET(request: Request) {
+export async function GET() {
   const now = Date.now();
 
   // Check cache first

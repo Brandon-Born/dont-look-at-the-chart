@@ -1,4 +1,5 @@
-import type { DefaultSession, User as DefaultUser } from "next-auth";
+import type { DefaultUser } from "next-auth";
+// import type { DefaultSession, User as DefaultUser } from "next-auth"; // DefaultSession unused
 import type { JWT as DefaultJWT } from "next-auth/jwt";
 
 // Extend the built-in session types

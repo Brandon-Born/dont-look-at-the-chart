@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { NotificationRule, NotificationRuleType } from '@prisma/client' // Import actual Prisma type
+import { NotificationRule } from '@prisma/client' // Import actual Prisma type
 
 interface NotificationRuleListProps {
   trackedAssetId: string; // ID of the parent TrackedAsset

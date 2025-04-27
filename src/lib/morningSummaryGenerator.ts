@@ -1,5 +1,4 @@
 import { prisma } from '@/lib/prisma';
-import { PriceHistory, TrackedAsset, Asset, User } from '@prisma/client';
 import { subHours } from 'date-fns';
 
 export interface AssetSummaryData {

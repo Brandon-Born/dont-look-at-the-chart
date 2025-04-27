@@ -93,6 +93,7 @@ DLATC is a web application built with Next.js (App Router) enabling users to tra
 4.  **State Management (Frontend):**
     *   Review frontend state management. For complex interactions, consider libraries like Zustand or Jotai if simple `useState`/`useContext` becomes hard to manage. (Depends on actual UI complexity).
 5.  **Testing:**
+    *   **Framework:** Jest is used for unit and integration testing.
     *   Introduce unit tests for critical logic (e.g., `ruleEvaluator.ts`, `coingecko.ts`, notification formatting).
     *   Consider integration tests for API routes and key user flows.
 6.  **Security Hardening:**

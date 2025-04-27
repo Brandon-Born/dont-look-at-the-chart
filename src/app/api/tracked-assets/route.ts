@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+// import { z } from 'zod'; // Unused
+// import { Prisma } from '@prisma/client'; // Unused
 
 // GET /api/tracked-assets - Fetch assets tracked by the current user
-export async function GET(request: Request) {
+export async function GET() {
   const user = await getCurrentUser();
 
   if (!user || !user.id) {
@@ -52,7 +54,7 @@ export async function POST(request: Request) {
     if (!coinData.coingeckoId || !coinData.symbol || !coinData.name) {
         throw new Error("Missing required coin data fields.");
     }
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
@@ -85,9 +87,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json(newTrackedAsset, { status: 201 }); // 201 Created
 
-  } catch (error: any) {
-    // Handle potential unique constraint violation (user already tracking asset)
-    if (error.code === 'P2002') { // Prisma unique constraint violation code
+  } catch (error) {
+    // Check if the error object has a 'code' property matching P2002
+    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2002') { 
       return NextResponse.json({ error: "Asset already tracked" }, { status: 409 }); // 409 Conflict
     }
     console.error("[API/TRACKED_ASSETS] POST Error:", error);

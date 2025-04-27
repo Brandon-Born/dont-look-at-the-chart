@@ -57,8 +57,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(rules);
 
   } catch (error) {
-    console.error("[API/NOTIFICATION_RULES] GET Error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    console.error("Error fetching notification rules:", error);
+    return NextResponse.json({ error: "Failed to fetch notification rules" }, { status: 500 });
   }
 }
 
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
   let rawBody;
   try {
     rawBody = await request.json();
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
@@ -109,9 +109,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json(newRule, { status: 201 });
 
-  } catch (error: any) {
-    // Could add checks for other specific errors if needed
-    console.error("[API/NOTIFICATION_RULES] POST Error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (e) {
+    console.error("Error creating notification rule:", e);
+    return NextResponse.json({ error: "Failed to create notification rule" }, { status: 500 });
   }
 } 

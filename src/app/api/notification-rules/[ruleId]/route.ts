@@ -52,7 +52,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   let rawBody;
   try {
     rawBody = await request.json();
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
@@ -79,11 +79,11 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
     return NextResponse.json(updatedRule);
 
-  } catch (error: any) {
-    if (error.message === 'Forbidden') {
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Forbidden') {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-    console.error(`[API/NOTIFICATION_RULES/[ruleId]] PATCH Error (ID: ${ruleId}):`, error);
+    console.error("[API/NOTIFICATION_RULES/:ruleId] PATCH Error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -114,11 +114,48 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: "Rule deleted successfully" }, { status: 200 });
 
-  } catch (error: any) {
-     if (error.message === 'Forbidden') {
+  } catch (error) {
+     if (error instanceof Error && error.message === 'Forbidden') {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-    console.error(`[API/NOTIFICATION_RULES/[ruleId]] DELETE Error (ID: ${ruleId}):`, error);
+    console.error("[API/NOTIFICATION_RULES/:ruleId] DELETE Error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+// GET /api/notification-rules/[ruleId] - Get a specific rule
+export async function GET(request: Request, { params }: RouteParams) {
+  const user = await getCurrentUser();
+  const ruleId = params.ruleId;
+
+  if (!user || !user.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!ruleId) {
+    return NextResponse.json({ error: "Rule ID is required" }, { status: 400 });
+  }
+
+  try {
+    const ruleExistsAndOwned = await verifyRuleOwnership(ruleId, user.id);
+    if (!ruleExistsAndOwned) {
+      return NextResponse.json({ error: "Notification rule not found" }, { status: 404 });
+    }
+
+    // Fetch the rule
+    const rule = await prisma.notificationRule.findUnique({
+      where: { id: ruleId },
+      include: {
+        trackedAsset: true,
+      },
+    });
+
+    if (!rule) {
+      return NextResponse.json({ error: "Notification rule not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(rule);
+  } catch (e) {
+    console.error("[API/NOTIFICATION_RULES/:ruleId] GET Error:", e); // Log error
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 } 
