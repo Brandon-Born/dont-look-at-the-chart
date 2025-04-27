@@ -23,10 +23,10 @@ DLATC is a web application built with Next.js (App Router) enabling users to tra
 
 ## 3. Code Structure
 
-*   **`app/`:** Next.js App Router directory.
-    *   **`app/api/`:** Serverless API routes.
-        *   **`app/api/cron/`:** API routes triggered by Vercel Cron Jobs (e.g., price fetching, rule evaluation).
-    *   **`app/(pages)/`** (Inferred): Likely contains the main application pages/routes for the UI.
+*   **`src/app/`:** Main Next.js App Router directory.
+    *   **`src/app/api/`:** Serverless API routes.
+        *   **`src/app/api/cron/`:** API routes triggered by Vercel Cron Jobs (e.g., price fetching, rule evaluation).
+    *   **`src/app/(pages)/`** (Inferred): Likely contains the main application pages/routes for the UI.
 *   **`src/`:** Main application source code.
     *   **`src/components/`:** Reusable React components (likely using Shadcn/ui).
     *   **`src/lib/`:** Core backend logic, utilities, and service clients.
@@ -39,7 +39,9 @@ DLATC is a web application built with Next.js (App Router) enabling users to tra
         *   `utils.ts`, `timezones.ts`: General utilities.
     *   **`src/hooks/`:** Custom React hooks.
     *   **`src/types/`:** TypeScript type definitions.
-    *   **`src/app/`** (Potentially legacy or specific app logic): Needs clarification if separate from root `app/`.
+
+> **IMPORTANT:** Next.js App Router requires all routes to be in a single `app` directory. This project uses `src/app/` for all routes. Do not create a separate `app/` directory at the root level, as having multiple app directories will cause routing conflicts and 404 errors.
+
 *   **`prisma/`:** Database schema (`schema.prisma`) and migrations.
 *   **`public/`:** Static assets.
 *   **Configuration Files:** `next.config.ts`, `tailwind.config.ts`, `tsconfig.json`, `package.json`, `vercel.json`.
