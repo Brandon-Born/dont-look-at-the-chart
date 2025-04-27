@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import QuietTimeForm from '@/components/settings/QuietTimeForm';
+import MorningSummaryForm from '@/components/settings/MorningSummaryForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from '@/components/ui/separator';
 
@@ -30,20 +31,8 @@ export default async function SettingsPage() {
         {/* Separator */}
         <Separator />
 
-        {/* Placeholder for Morning Summary Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Morning Summary</CardTitle>
-            <CardDescription>
-              Configure your daily morning summary email (coming soon).
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Functionality to enable/disable the morning summary will be added here.
-            </p>
-          </CardContent>
-        </Card>
+        {/* Morning Summary Settings Card */}
+        <MorningSummaryForm />
 
         {/* Add other settings sections as needed */}
         {/* <Separator />
