@@ -4,7 +4,6 @@ import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import QuietTimeForm from '@/components/settings/QuietTimeForm';
 import MorningSummaryForm from '@/components/settings/MorningSummaryForm';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from '@/components/ui/separator';
 
 // You might want to add other setting sections here later
