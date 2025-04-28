@@ -121,19 +121,16 @@ export default function MorningSummaryForm() {
           </div>
         ) : (
           <>
-            <div className="flex items-center justify-between space-x-2">
-              <Label htmlFor="morningSummaryEnabled" className="flex flex-col space-y-1">
-                <span>Enable Morning Summary</span>
-                <span className="font-normal leading-snug text-muted-foreground">
-                  Receive a daily summary email.
-                </span>
-              </Label>
+            <div className="flex items-center space-x-2">
               <Switch
                 id="morningSummaryEnabled"
-                checked={settings.morningSummaryEnabled}
+                checked={settings.morningSummaryEnabled ?? false}
                 onCheckedChange={handleSwitchChange}
-                aria-label="Enable morning summary"
+                aria-labelledby="morning-summary-label"
               />
+              <Label htmlFor="morningSummaryEnabled" id="morning-summary-label" className="flex flex-col space-y-1">
+                <span>Enable Morning Summary</span>
+              </Label>
             </div>
 
             {settings.morningSummaryEnabled && (
