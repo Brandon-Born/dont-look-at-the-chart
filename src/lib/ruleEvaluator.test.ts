@@ -389,7 +389,7 @@ describe('evaluateRules', () => {
       id: 'rule-4',
       trackedAssetId: mockTrackedAsset.id,
       type: NotificationRuleType.PERCENT_CHANGE_DECREASE,
-      value: -5, // Target: -5%
+      value: 5, // Target: 5% decrease (represented as a positive number)
       timeWindowHours: ruleTimeWindowHours,
       isEnabled: true,
       createdAt: new Date(),
@@ -416,7 +416,8 @@ describe('evaluateRules', () => {
       price: 0.50, // Price 4 hours ago
       timestamp: startTime, 
     };
-    // Price decreased from 0.50 to 0.45 (-10%), which is <= -5%
+    // Price decreased from 0.50 to 0.45 (-10%), which triggers a rule set for a 5% decrease 
+    // (-10 is <= -5)
 
     mockPrisma.notificationRule.findMany.mockResolvedValue([mockRule]);
     mockPrisma.priceHistory.findMany.mockResolvedValue([mockCurrentPrice]);
@@ -444,7 +445,7 @@ describe('evaluateRules', () => {
         ruleId: mockRule.id,
         ruleType: mockRule.type,
         triggeringPrice: mockCurrentPrice.price,
-        ruleValue: mockRule.value, // Check that the negative target is passed
+        ruleValue: 5, // Check that the positive target value is passed/checked
       }),
     ]);
 

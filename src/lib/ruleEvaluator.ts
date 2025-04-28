@@ -4,7 +4,7 @@ import { sendNotifications } from './notificationSender';
 import { toZonedTime, format } from 'date-fns-tz';
 
 // Simple cooldown period (in minutes) to prevent rapid re-triggering of the same rule
-const RULE_COOLDOWN_MINUTES = 240; 
+const RULE_COOLDOWN_MINUTES = 119;
 
 interface TriggeredRuleInfo {
   ruleId: string;
@@ -176,8 +176,9 @@ export async function evaluateRules(
                         
                         if (rule.type === NotificationRuleType.PERCENT_CHANGE_INCREASE) {
                             conditionMet = percentChange >= rule.value;
-                        } else { 
-                            conditionMet = percentChange <= rule.value; // Assumes negative value for decrease target
+                        } else { // PERCENT_CHANGE_DECREASE
+                            // Ensure we compare against the negative magnitude
+                            conditionMet = percentChange <= -Math.abs(rule.value);
                         }
                     } 
                 }
