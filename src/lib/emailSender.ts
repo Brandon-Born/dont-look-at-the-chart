@@ -78,7 +78,7 @@ export async function sendMorningSummaryEmail(to: string, summaryData: AssetSumm
 
     try {
         const { data, error } = await resend.emails.send({
-            from: EMAIL_FROM,
+            from: `DLATC Alerts <${EMAIL_FROM}>`,
             to: [to],
             subject: subject,
             html: htmlBody,
