@@ -4,7 +4,7 @@ import { sendNotifications } from './notificationSender';
 import { toZonedTime, format } from 'date-fns-tz';
 
 // Simple cooldown period (in minutes) to prevent rapid re-triggering of the same rule
-const RULE_COOLDOWN_MINUTES = 60; 
+const RULE_COOLDOWN_MINUTES = 240; 
 
 interface TriggeredRuleInfo {
   ruleId: string;

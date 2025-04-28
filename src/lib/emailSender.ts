@@ -9,9 +9,9 @@ if (!process.env.RESEND_API_KEY) {
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Replace with your verified sender email from Resend
-const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@example.com'; 
-if (FROM_EMAIL === 'noreply@example.com') {
-    console.warn("EMAIL SENDER: FROM_EMAIL environment variable is not set or is using the default placeholder. Please configure a verified sender email in Resend and set the FROM_EMAIL variable.");
+const EMAIL_FROM = process.env.EMAIL_FROM || 'noreply@example.com'; 
+if (EMAIL_FROM === 'noreply@example.com') {
+    console.warn("EMAIL SENDER: EMAIL_FROM environment variable is not set or is using the default placeholder. Please configure a verified sender email in Resend and set the EMAIL_FROM variable.");
 }
 
 /**
@@ -62,8 +62,8 @@ function formatSummaryEmailHtml(summaryData: AssetSummaryData[]): string {
  * @returns {Promise<void>}
  */
 export async function sendMorningSummaryEmail(to: string, summaryData: AssetSummaryData[]): Promise<void> {
-    if (!process.env.RESEND_API_KEY || FROM_EMAIL === 'noreply@example.com') {
-        console.error("Email Sender: Cannot send email due to missing API key or FROM_EMAIL configuration.");
+    if (!process.env.RESEND_API_KEY || EMAIL_FROM === 'noreply@example.com') {
+        console.error("Email Sender: Cannot send email due to missing API key or EMAIL_FROM configuration.");
         // Optionally throw an error or just return
         return; 
     }
@@ -78,7 +78,7 @@ export async function sendMorningSummaryEmail(to: string, summaryData: AssetSumm
 
     try {
         const { data, error } = await resend.emails.send({
-            from: FROM_EMAIL,
+            from: EMAIL_FROM,
             to: [to],
             subject: subject,
             html: htmlBody,
