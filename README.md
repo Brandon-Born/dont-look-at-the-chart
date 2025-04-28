@@ -4,6 +4,10 @@ DLATC is a notification service enabling users to receive cryptocurrency price u
 
 This project is built with Next.js and designed for deployment on Vercel.
 
+**Check out the live version:** [**https://dont-look-at-the-chart.com**](https://dont-look-at-the-chart.com)
+
+**Disclaimer:** This is a hobby project created for demonstration and learning purposes. While functional, it may contain bugs or limitations. Use it at your own risk. No financial advice is provided or implied.
+
 ## Core Features
 
 *   **User Management:** Simple user registration/login (Email/OAuth via NextAuth.js).
