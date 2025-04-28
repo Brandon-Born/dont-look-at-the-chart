@@ -51,7 +51,7 @@ export default function MorningSummaryForm() {
     fetchSettings();
   }, [fetchSettings]);
 
-  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = event.target;
     setSettings(prev => ({ ...prev, [name]: value }));
   };
@@ -139,18 +139,27 @@ export default function MorningSummaryForm() {
 
             {settings.morningSummaryEnabled && (
               <div className="space-y-2">
-                <Label htmlFor="morningSummaryTime">Preferred Summary Time</Label>
-                <Input
+                <Label htmlFor="morningSummaryTime">Preferred Summary Hour</Label>
+                <select
                   id="morningSummaryTime"
                   name="morningSummaryTime"
-                  type="time"
-                  value={settings.morningSummaryTime ?? ''}
+                  value={settings.morningSummaryTime ?? '08:00'}
                   onChange={handleInputChange}
-                  className="w-auto"
+                  className="flex h-10 w-auto rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   disabled={!settings.morningSummaryEnabled}
-                />
+                >
+                  {Array.from({ length: 24 }, (_, i) => {
+                    const hour = i.toString().padStart(2, '0');
+                    const timeValue = `${hour}:00`;
+                    return (
+                      <option key={timeValue} value={timeValue}>
+                        {timeValue}
+                      </option>
+                    );
+                  })}
+                </select>
                 <p className="text-sm text-muted-foreground">
-                  Time is relative to your configured time zone ({settings.quietTimeZone || 'Not set'}). Set your timezone in the Quiet Time settings.
+                  The summary will be sent around this hour, based on your configured time zone ({settings.quietTimeZone || 'Not set'}).
                 </p>
               </div>
             )}
