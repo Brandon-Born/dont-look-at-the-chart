@@ -3,6 +3,9 @@ import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { z } from 'zod';
 
+// Define schema for the route parameter
+const cuidSchema = z.string().cuid({ message: "Invalid Rule ID format." });
+
 // Helper function to verify ownership (could be moved to a lib file)
 async function verifyRuleOwnership(ruleId: string, userId: string): Promise<boolean> {
   const rule = await prisma.notificationRule.findUnique({
@@ -40,14 +43,26 @@ export async function PATCH(
   context: any // Use any for context to bypass complex type issues
 ) {
   const user = await getCurrentUser();
-  const ruleId = context?.params?.ruleId; // Safely access params
+  // const ruleId = context?.params?.ruleId; // Removed
 
   if (!user || !user.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (!ruleId) {
-    return NextResponse.json({ error: "Rule ID is required" }, { status: 400 });
+
+  // Validate the ID from route parameters
+  const idValidation = cuidSchema.safeParse(context?.params?.ruleId);
+  if (!idValidation.success) {
+    return NextResponse.json(
+      { error: "Invalid Rule ID", details: idValidation.error.flatten() },
+      { status: 400 }
+    );
   }
+  const ruleId = idValidation.data; // Use validated ID
+
+  // Remove redundant manual check
+  // if (!ruleId) {
+  //   return NextResponse.json({ error: "Rule ID is required" }, { status: 400 });
+  // }
 
   let rawBody;
   try {
@@ -94,14 +109,26 @@ export async function DELETE(
   context: any // Use any for context
 ) {
   const user = await getCurrentUser();
-  const ruleId = context?.params?.ruleId; // Safely access params
+  // const ruleId = context?.params?.ruleId; // Removed
 
   if (!user || !user.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (!ruleId) {
-    return NextResponse.json({ error: "Rule ID is required" }, { status: 400 });
+
+  // Validate the ID from route parameters
+  const idValidation = cuidSchema.safeParse(context?.params?.ruleId);
+  if (!idValidation.success) {
+    return NextResponse.json(
+      { error: "Invalid Rule ID", details: idValidation.error.flatten() },
+      { status: 400 }
+    );
   }
+  const ruleId = idValidation.data; // Use validated ID
+
+  // Remove redundant manual check
+  // if (!ruleId) {
+  //   return NextResponse.json({ error: "Rule ID is required" }, { status: 400 });
+  // }
 
   try {
     const ruleExistsAndOwned = await verifyRuleOwnership(ruleId, user.id);
@@ -131,14 +158,26 @@ export async function GET(
   context: any // Use any for context
 ) {
   const user = await getCurrentUser();
-  const ruleId = context?.params?.ruleId; // Safely access params
+  // const ruleId = context?.params?.ruleId; // Removed
 
   if (!user || !user.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (!ruleId) {
-    return NextResponse.json({ error: "Rule ID is required" }, { status: 400 });
+
+  // Validate the ID from route parameters
+  const idValidation = cuidSchema.safeParse(context?.params?.ruleId);
+  if (!idValidation.success) {
+    return NextResponse.json(
+      { error: "Invalid Rule ID", details: idValidation.error.flatten() },
+      { status: 400 }
+    );
   }
+  const ruleId = idValidation.data; // Use validated ID
+
+  // Remove redundant manual check
+  // if (!ruleId) {
+  //   return NextResponse.json({ error: "Rule ID is required" }, { status: 400 });
+  // }
 
   try {
     const ruleExistsAndOwned = await verifyRuleOwnership(ruleId, user.id);

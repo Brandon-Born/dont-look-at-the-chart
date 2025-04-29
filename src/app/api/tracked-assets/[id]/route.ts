@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { z } from 'zod'; // Import Zod
+
+// Define schema for the route parameter
+const cuidSchema = z.string().cuid({ message: "Invalid ID format." });
 
 // DELETE /api/tracked-assets/[id] - Remove an asset from the user's tracked list
 export async function DELETE(
@@ -9,15 +13,20 @@ export async function DELETE(
   context: any // Use any for context to bypass complex type issues
 ) {
   const user = await getCurrentUser();
-  const trackedAssetId = context?.params?.id; // Safely access params
 
   if (!user || !user.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!trackedAssetId) {
-    return NextResponse.json({ error: "Tracked Asset ID is required" }, { status: 400 });
+  // Validate the ID from route parameters
+  const idValidation = cuidSchema.safeParse(context?.params?.id);
+  if (!idValidation.success) {
+    return NextResponse.json(
+      { error: "Invalid Tracked Asset ID", details: idValidation.error.flatten() },
+      { status: 400 }
+    );
   }
+  const trackedAssetId = idValidation.data;
 
   try {
     // Verify the tracked asset exists and belongs to the current user before deleting

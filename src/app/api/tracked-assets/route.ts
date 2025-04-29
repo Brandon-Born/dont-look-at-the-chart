@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-// import { z } from 'zod'; // Unused
+import { z } from 'zod'; // Import Zod
 // import { Prisma } from '@prisma/client'; // Unused
+
+// Define Zod schema for the POST request body
+const addTrackedAssetSchema = z.object({
+  coingeckoId: z.string().min(1, { message: "CoinGecko ID is required" }),
+  symbol: z.string().min(1, { message: "Symbol is required" }),
+  name: z.string().min(1, { message: "Name is required" }),
+});
 
 // GET /api/tracked-assets - Fetch assets tracked by the current user
 export async function GET() {
@@ -48,25 +55,34 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let coinData: { coingeckoId: string; symbol: string; name: string };
+  let rawBody;
   try {
-    coinData = await request.json();
-    if (!coinData.coingeckoId || !coinData.symbol || !coinData.name) {
-        throw new Error("Missing required coin data fields.");
-    }
+    rawBody = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
+
+  // Validate the request body using Zod
+  const validationResult = addTrackedAssetSchema.safeParse(rawBody);
+  if (!validationResult.success) {
+    return NextResponse.json(
+      { error: "Invalid input", details: validationResult.error.flatten() },
+      { status: 400 }
+    );
+  }
+
+  // Use the validated data
+  const coinData = validationResult.data;
 
   try {
     // 1. Ensure the Asset exists in our database (create if not)
     const asset = await prisma.asset.upsert({
       where: { coingeckoId: coinData.coingeckoId },
-      update: { 
+      update: {
         // Update symbol/name if they somehow changed on CoinGecko
         symbol: coinData.symbol,
         name: coinData.name,
-       }, 
+       },
       create: {
         coingeckoId: coinData.coingeckoId,
         symbol: coinData.symbol,

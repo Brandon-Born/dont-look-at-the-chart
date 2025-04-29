@@ -4,6 +4,9 @@ import { prisma } from "@/lib/prisma";
 import { z } from 'zod';
 import { NotificationRuleType } from "@prisma/client";
 
+// Define schema for the query parameter
+const cuidSchema = z.string().cuid({ message: "Invalid Tracked Asset ID format." });
+
 // Schema for POST request body validation
 const createRuleSchema = z.object({
   trackedAssetId: z.string().cuid(),
@@ -26,10 +29,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const trackedAssetId = request.nextUrl.searchParams.get('trackedAssetId');
-  if (!trackedAssetId) {
-    return NextResponse.json({ error: "trackedAssetId query parameter is required" }, { status: 400 });
+  // Validate trackedAssetId from query parameters
+  const idValidation = cuidSchema.safeParse(request.nextUrl.searchParams.get('trackedAssetId'));
+  if (!idValidation.success) {
+    return NextResponse.json(
+      { error: "Invalid or missing trackedAssetId query parameter", details: idValidation.error.flatten() },
+      { status: 400 }
+    );
   }
+  const trackedAssetId = idValidation.data;
 
   try {
     // Verify user owns the parent TrackedAsset before fetching rules
