@@ -31,6 +31,7 @@ export async function GET(request: Request) {
         return NextResponse.json({ success: true, message: 'Scheduled summaries check completed.' });
     } catch (error) {
         console.error("API Route Error: Failed to execute sendScheduledSummaries:", error);
-        return NextResponse.json({ error: 'Failed to execute scheduled summaries function.', details: error instanceof Error ? error.message : String(error) }, { status: 500 });
+        // Return a generic error message without leaking details
+        return NextResponse.json({ error: 'Failed to execute scheduled summaries function.' }, { status: 500 });
     }
 } 
